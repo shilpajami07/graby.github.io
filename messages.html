@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Messages — Grabby</title>
+<link rel="stylesheet" href="styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  .typing-indicator { display:flex; gap:4px; align-items:center; padding:10px 14px; }
+  .typing-dot { width:8px; height:8px; background:var(--text3); border-radius:50%; animation:typing .8s ease-in-out infinite; }
+  .typing-dot:nth-child(2) { animation-delay:.2s; }
+  .typing-dot:nth-child(3) { animation-delay:.4s; }
+  @keyframes typing { 0%,80%,100%{transform:scale(1);opacity:.4} 40%{transform:scale(1.2);opacity:1} }
+  .online-dot { width:10px; height:10px; background:#22c55e; border-radius:50%; display:inline-block; border:2px solid white; }
+  .chat-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--text3); gap:12px; }
+  .chat-empty .emoji { font-size:56px; }
+  .emoji-btn { font-size:20px; background:none; border:none; cursor:pointer; padding:4px 6px; border-radius:6px; transition:background .15s; }
+  .emoji-btn:hover { background:var(--surface2); }
+  .quick-replies { display:flex; gap:8px; padding:8px 24px; flex-wrap:wrap; background:var(--surface); border-top:1px solid var(--border); }
+  .quick-reply { padding:6px 14px; border-radius:20px; border:1.5px solid var(--border); font-size:12px; cursor:pointer; transition:var(--transition); background:var(--bg); white-space:nowrap; }
+  .quick-reply:hover { border-color:var(--accent); color:var(--accent); }
+</style>
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="logo">Grab<span>by</span></a>
+    <div class="nav-search">
+      <span class="search-icon">⌕</span>
+      <input type="text" placeholder="Search listings..." id="navSearchInput">
+      <button class="search-btn" onclick="handleNavSearch()">Search</button>
+    </div>
+    <div class="nav-actions">
+      <a href="listings.html" class="nav-link">Browse</a>
+      <a href="profile.html" class="nav-link">Profile</a>
+      <a href="messages.html" class="nav-link nav-msg" style="color:var(--accent)"><span>Messages</span><span class="msg-badge">3</span></a>
+      <a href="post-listing.html" class="btn-sell">+ Sell</a>
+    </div>
+    <button class="hamburger" onclick="toggleMobileMenu()">☰</button>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="listings.html">Browse</a>
+    <a href="profile.html">Profile</a>
+    <a href="messages.html">Messages</a>
+    <a href="post-listing.html" class="btn-sell-mobile">+ Sell Something</a>
+  </div>
+</nav>
+
+<div class="messages-page">
+  <!-- CONVERSATION LIST -->
+  <div class="convo-list" id="convoList">
+    <div class="convo-header">
+      Messages
+      <span class="msg-badge" style="font-size:12px;padding:3px 8px;margin-left:8px">3</span>
+    </div>
+    <div id="convoItems"></div>
+  </div>
+
+  <!-- CHAT WINDOW -->
+  <div class="chat-window" id="chatWindow">
+    <div class="chat-empty" id="chatEmpty">
+      <div class="emoji">💬</div>
+      <div style="font-size:18px;font-weight:600;color:var(--text2)">Select a conversation</div>
+      <div style="font-size:14px">Choose a message to start chatting</div>
+    </div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+let activeConvoId = null;
+let typingTimeout = null;
+
+function renderConvoList() {
+  const container = document.getElementById('convoItems');
+  container.innerHTML = GRABBY.MESSAGES.map(c => `
+    <div class="convo-item ${c.unread > 0 ? '' : ''}" id="convo-${c.id}" onclick="openConvo(${c.id})">
+      <div class="convo-av" style="position:relative">
+        ${c.withAvatar}
+        ${c.unread ? `<span class="online-dot" style="position:absolute;bottom:0;right:0"></span>` : ''}
+      </div>
+      <div class="convo-details">
+        <div class="convo-name" style="${c.unread ? 'font-weight:700' : ''}">${c.withName}</div>
+        <div class="convo-listing">${c.listingTitle}</div>
+        <div class="convo-preview" style="${c.unread ? 'color:var(--text);font-weight:500' : ''}">${c.lastMsg}</div>
+      </div>
+      <div class="convo-meta">
+        <span class="convo-time">${c.time}</span>
+        ${c.unread ? `<div class="convo-badge">${c.unread}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function openConvo(id) {
+  activeConvoId = id;
+  const convo = GRABBY.MESSAGES.find(c => c.id === id);
+  if (!convo) return;
+
+  // Mark all as read
+  convo.msgs.forEach(m => m.read = true);
+  convo.unread = 0;
+  renderConvoList();
+
+  document.querySelectorAll('.convo-item').forEach(el => el.classList.remove('active'));
+  document.getElementById(`convo-${id}`)?.classList.add('active');
+
+  const listing = GRABBY.getListingById(convo.listingId) || {};
+  const window_ = document.getElementById('chatWindow');
+
+  window_.innerHTML = `
+    <div class="chat-header">
+      <div class="chat-header-av">${convo.withAvatar}</div>
+      <div class="chat-header-info">
+        <div class="chat-header-name">${convo.withName}</div>
+        <div class="chat-header-status">● Online now</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button onclick="window.location.href='profile.html'" style="background:var(--surface2);border:1px solid var(--border);padding:6px 14px;border-radius:20px;font-size:13px;cursor:pointer">View profile</button>
+        <button onclick="reportUser()" style="background:transparent;border:none;font-size:18px;cursor:pointer;color:var(--text3)" title="Report">⋯</button>
+      </div>
+    </div>
+
+    <div class="chat-listing-bar">
+      <div class="clb-img" style="background:${listing.bg || '#eee'}">${listing.img || '📦'}</div>
+      <div>
+        <div class="clb-price">${listing.price === 0 ? 'FREE' : '$'+(listing.price||'')} · ${convo.listingTitle}</div>
+        <div class="clb-title">${listing.condition || ''} ${listing.location ? '· '+listing.location : ''}</div>
+      </div>
+      <a href="product.html?id=${convo.listingId}" style="margin-left:auto;font-size:13px;color:var(--accent)">View →</a>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+      ${renderMessages(convo.msgs)}
+    </div>
+
+    <div class="quick-replies" id="quickReplies">
+      <span class="quick-reply" onclick="sendQuickReply('Is this still available?')">Is this still available?</span>
+      <span class="quick-reply" onclick="sendQuickReply('Can you do a lower price?')">Negotiate price?</span>
+      <span class="quick-reply" onclick="sendQuickReply('Can I pick up today?')">Pick up today?</span>
+      <span class="quick-reply" onclick="makeOfferFromChat(${listing.price || 100})">Make offer 🤝</span>
+    </div>
+
+    <div class="chat-input-bar">
+      <button class="emoji-btn" onclick="toggleEmoji()">😊</button>
+      <input type="text" id="chatInput" placeholder="Type a message..." onkeydown="handleChatKey(event)" oninput="handleTyping()">
+      <button class="btn-send" onclick="sendMessage()">↑</button>
+    </div>
+  `;
+
+  scrollToBottom();
+}
+
+function renderMessages(msgs) {
+  return msgs.map(m => {
+    const isMe = m.from === 'me';
+    return `
+      <div class="msg-wrap ${isMe ? 'me' : 'them'}">
+        <div class="msg-bubble">${m.text}</div>
+        <div class="msg-time">${m.time} ${isMe ? (m.read ? '✓✓' : '✓') : ''}</div>
+      </div>`;
+  }).join('');
+}
+
+function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const text = input?.value.trim();
+  if (!text) return;
+
+  const convo = GRABBY.MESSAGES.find(c => c.id === activeConvoId);
+  if (!convo) return;
+
+  const now = new Date();
+  const time = now.toLocaleTimeString('en-AU', {hour:'2-digit', minute:'2-digit'});
+  convo.msgs.push({ from:'me', text, time, read:false });
+  convo.lastMsg = text;
+
+  input.value = '';
+  const msgContainer = document.getElementById('chatMessages');
+  msgContainer.innerHTML = renderMessages(convo.msgs);
+  scrollToBottom();
+  renderConvoList();
+
+  // Simulate reply after delay
+  simulateReply(convo);
+}
+
+function simulateReply(convo) {
+  const replies = [
+    "Sure, that works for me! 😊",
+    "Let me check and get back to you shortly",
+    "Yes, I can do that! When would you like to pick up?",
+    "Thanks for your interest! Feel free to ask any questions",
+    "I can do $5 less, final offer 🤝",
+  ];
+
+  // Show typing indicator
+  const msgContainer = document.getElementById('chatMessages');
+  const typingEl = document.createElement('div');
+  typingEl.className = 'msg-wrap them';
+  typingEl.id = 'typingIndicator';
+  typingEl.innerHTML = `<div class="msg-bubble" style="padding:0"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+  msgContainer.appendChild(typingEl);
+  scrollToBottom();
+
+  setTimeout(() => {
+    document.getElementById('typingIndicator')?.remove();
+    const reply = replies[Math.floor(Math.random() * replies.length)];
+    const time = new Date().toLocaleTimeString('en-AU', {hour:'2-digit', minute:'2-digit'});
+    convo.msgs.push({ from:convo.with, text:reply, time, read:true });
+    convo.lastMsg = reply;
+    if (msgContainer) msgContainer.innerHTML = renderMessages(convo.msgs);
+    scrollToBottom();
+    renderConvoList();
+    showToast(`New message from ${convo.withName}`);
+  }, 1500 + Math.random() * 1000);
+}
+
+function sendQuickReply(text) {
+  document.getElementById('chatInput').value = text;
+  sendMessage();
+}
+
+function makeOfferFromChat(price) {
+  const suggested = Math.round((price || 100) * 0.88);
+  const offerAmt = prompt(`Enter your offer amount (suggested: $${suggested}):`);
+  if (!offerAmt) return;
+
+  const convo = GRABBY.MESSAGES.find(c => c.id === activeConvoId);
+  if (!convo) return;
+  const time = new Date().toLocaleTimeString('en-AU', {hour:'2-digit', minute:'2-digit'});
+  convo.msgs.push({ from:'me', text:`🤝 OFFER: $${offerAmt}`, time, read:false });
+  convo.lastMsg = `Offer: $${offerAmt}`;
+
+  const msgContainer = document.getElementById('chatMessages');
+  msgContainer.innerHTML = renderMessages(convo.msgs);
+  scrollToBottom();
+  renderConvoList();
+  showToast(`✅ Offer of $${offerAmt} sent!`);
+  simulateReply(convo);
+}
+
+function handleChatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function handleTyping() {
+  clearTimeout(typingTimeout);
+}
+
+function scrollToBottom() {
+  const el = document.getElementById('chatMessages');
+  if (el) el.scrollTop = el.scrollHeight;
+}
+
+function toggleEmoji() {
+  const emojis = ['😊','👍','❤️','🔥','💯','😂','🙏','✅','📦','🚀'];
+  const input = document.getElementById('chatInput');
+  if (input) {
+    input.value += emojis[Math.floor(Math.random() * emojis.length)];
+    input.focus();
+  }
+}
+
+function reportUser() {
+  showToast('Report submitted. Our team will review shortly.');
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  renderConvoList();
+  // Auto-open first conversation
+  if (GRABBY.MESSAGES.length) openConvo(GRABBY.MESSAGES[0].id);
+});
+</script>
+</body>
+</html>

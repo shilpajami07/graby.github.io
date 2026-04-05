@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Browse Listings — Grabby</title>
+<link rel="stylesheet" href="styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="logo">Grab<span>by</span></a>
+    <div class="nav-search">
+      <span class="search-icon">⌕</span>
+      <input type="text" placeholder="Search listings..." id="navSearchInput">
+      <button class="search-btn" onclick="handleNavSearch()">Search</button>
+    </div>
+    <div class="nav-actions">
+      <a href="listings.html" class="nav-link" style="color:var(--accent)">Browse</a>
+      <a href="profile.html" class="nav-link">Profile</a>
+      <a href="messages.html" class="nav-link nav-msg"><span>Messages</span><span class="msg-badge">3</span></a>
+      <a href="post-listing.html" class="btn-sell">+ Sell</a>
+    </div>
+    <button class="hamburger" onclick="toggleMobileMenu()">☰</button>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="listings.html">Browse</a>
+    <a href="profile.html">Profile</a>
+    <a href="messages.html">Messages</a>
+    <a href="post-listing.html" class="btn-sell-mobile">+ Sell Something</a>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <div class="container">
+    <h1 id="pageTitle">Browse Listings</h1>
+    <p id="pageSubtitle">Discover great deals near you and nationwide</p>
+  </div>
+</div>
+
+<div class="listings-layout">
+  <!-- SIDEBAR FILTERS -->
+  <aside class="filters-sidebar">
+    <div class="filter-group">
+      <h3>Category</h3>
+      <div class="filter-option"><input type="radio" name="cat" id="cat-all" value="" checked onchange="applyFilters()"><label for="cat-all">All Categories</label></div>
+      <div class="filter-option"><input type="radio" name="cat" id="cat-app" value="apparel" onchange="applyFilters()"><label for="cat-app">👗 Apparel</label></div>
+      <div class="filter-option"><input type="radio" name="cat" id="cat-elec" value="electronics" onchange="applyFilters()"><label for="cat-elec">💻 Electronics</label></div>
+      <div class="filter-option"><input type="radio" name="cat" id="cat-home" value="homegoods" onchange="applyFilters()"><label for="cat-home">🛋️ Home Goods</label></div>
+      <div class="filter-option"><input type="radio" name="cat" id="cat-sport" value="sports" onchange="applyFilters()"><label for="cat-sport">⚽ Sporting Goods</label></div>
+      <div class="filter-option"><input type="radio" name="cat" id="cat-music" value="music" onchange="applyFilters()"><label for="cat-music">🎸 Music</label></div>
+      <div class="filter-option"><input type="radio" name="cat" id="cat-garden" value="garden" onchange="applyFilters()"><label for="cat-garden">🌿 Garden & Outdoor</label></div>
+      <div class="filter-option"><input type="radio" name="cat" id="cat-hobbies" value="hobbies" onchange="applyFilters()"><label for="cat-hobbies">🎨 Hobbies</label></div>
+      <div class="filter-option"><input type="radio" name="cat" id="cat-free" value="free" onchange="applyFilters()"><label for="cat-free">🎁 Free Stuff</label></div>
+      <div class="filter-option"><input type="radio" name="cat" id="cat-vehicles" value="vehicles" onchange="applyFilters()"><label for="cat-vehicles">🚗 Vehicles</label></div>
+    </div>
+
+    <div class="filter-group">
+      <h3>Price Range</h3>
+      <div class="price-range">
+        <input type="number" class="price-input" placeholder="Min" id="priceMin" onchange="applyFilters()">
+        <span>–</span>
+        <input type="number" class="price-input" placeholder="Max" id="priceMax" onchange="applyFilters()">
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <h3>Condition</h3>
+      <div class="filter-option"><input type="checkbox" id="cond-new" value="New" onchange="applyFilters()"><label for="cond-new">New</label></div>
+      <div class="filter-option"><input type="checkbox" id="cond-likenew" value="Like new" onchange="applyFilters()"><label for="cond-likenew">Like new</label></div>
+      <div class="filter-option"><input type="checkbox" id="cond-good" value="Good" onchange="applyFilters()"><label for="cond-good">Good</label></div>
+      <div class="filter-option"><input type="checkbox" id="cond-fair" value="Fair" onchange="applyFilters()"><label for="cond-fair">Fair</label></div>
+    </div>
+
+    <div class="filter-group">
+      <h3>Delivery</h3>
+      <div class="filter-option"><input type="checkbox" id="ship-yes" onchange="applyFilters()"><label for="ship-yes">📦 Shipping available</label></div>
+      <div class="filter-option"><input type="checkbox" id="pickup-yes" onchange="applyFilters()"><label for="pickup-yes">🤝 Local pickup</label></div>
+    </div>
+
+    <button onclick="clearFilters()" style="width:100%;padding:10px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:transparent;font-size:14px;color:var(--text2);cursor:pointer;transition:var(--transition)" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">Clear all filters</button>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="listings-main">
+    <div class="listings-toolbar">
+      <div class="results-count" id="resultsCount">Showing all listings</div>
+      <select class="sort-select" id="sortSelect" onchange="applyFilters()">
+        <option value="recent">Most recent</option>
+        <option value="price-asc">Price: Low to High</option>
+        <option value="price-desc">Price: High to Low</option>
+        <option value="popular">Most popular</option>
+      </select>
+    </div>
+    <div class="listings-grid" id="mainGrid"></div>
+    <div class="load-more-wrap" id="loadMoreWrap">
+      <button class="btn-load-more" onclick="loadMoreListings()">Load more listings</button>
+    </div>
+  </main>
+</div>
+
+<!-- LISTING MODAL -->
+<div class="modal-overlay" id="listingModal" onclick="closeModal(event)">
+  <div class="modal-box" id="modalBox">
+    <button class="modal-close" onclick="closeListingModal()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+let currentPage = 0;
+const PAGE_SIZE = 12;
+let filteredItems = [];
+
+function getSelectedConditions() {
+  return ['New','Like new','Good','Fair'].filter(v =>
+    document.getElementById('cond-'+v.toLowerCase().replace(' ',''))?.checked
+  );
+}
+
+function applyFilters() {
+  const cat = document.querySelector('input[name="cat"]:checked')?.value || '';
+  const minP = parseFloat(document.getElementById('priceMin')?.value) || 0;
+  const maxP = parseFloat(document.getElementById('priceMax')?.value) || Infinity;
+  const conds = getSelectedConditions();
+  const shipping = document.getElementById('ship-yes')?.checked;
+  const pickup = document.getElementById('pickup-yes')?.checked;
+  const sort = document.getElementById('sortSelect')?.value || 'recent';
+
+  let items = [...GRABBY.LISTINGS];
+  if (cat) items = items.filter(l => l.category === cat || l.tags.includes(cat));
+  items = items.filter(l => l.price >= minP && l.price <= maxP);
+  if (conds.length) items = items.filter(l => conds.includes(l.condition));
+  if (shipping) items = items.filter(l => l.shipping);
+  if (pickup) items = items.filter(l => l.pickup);
+
+  if (sort === 'price-asc') items.sort((a,b) => a.price - b.price);
+  else if (sort === 'price-desc') items.sort((a,b) => b.price - a.price);
+  else if (sort === 'popular') items.sort((a,b) => b.views - a.views);
+  else items.reverse();
+
+  filteredItems = items;
+  currentPage = 0;
+  renderPage(true);
+  document.getElementById('resultsCount').textContent = `Showing ${items.length} listing${items.length !== 1 ? 's' : ''}`;
+}
+
+function renderPage(reset) {
+  const grid = document.getElementById('mainGrid');
+  const start = currentPage * PAGE_SIZE;
+  const slice = filteredItems.slice(start, start + PAGE_SIZE);
+  if (reset) grid.innerHTML = '';
+  if (filteredItems.length === 0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="emoji">🔍</div><h3>No listings found</h3><p>Try adjusting your filters</p></div>`;
+  } else {
+    grid.innerHTML += slice.map(l => buildListingCard(l)).join('');
+  }
+  const wrap = document.getElementById('loadMoreWrap');
+  wrap.style.display = start + PAGE_SIZE < filteredItems.length ? 'block' : 'none';
+}
+
+function loadMoreListings() {
+  currentPage++;
+  renderPage(false);
+}
+
+function clearFilters() {
+  document.querySelectorAll('input[name="cat"]')[0].checked = true;
+  document.getElementById('priceMin').value = '';
+  document.getElementById('priceMax').value = '';
+  ['cond-new','cond-likenew','cond-good','cond-fair','ship-yes','pickup-yes'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.checked = false;
+  });
+  document.getElementById('sortSelect').value = 'recent';
+  applyFilters();
+}
+
+// Parse URL params
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const q = params.get('q');
+  const cat = params.get('cat');
+  const sort = params.get('sort');
+
+  if (q) {
+    document.getElementById('navSearchInput').value = q;
+    const searchQ = q.toLowerCase();
+    filteredItems = GRABBY.LISTINGS.filter(l =>
+      l.title.toLowerCase().includes(searchQ) ||
+      l.desc.toLowerCase().includes(searchQ) ||
+      l.category.includes(searchQ)
+    );
+    document.getElementById('pageTitle').textContent = `Results for "${q}"`;
+    document.getElementById('pageSubtitle').textContent = `${filteredItems.length} listings found`;
+  } else if (cat) {
+    const radio = document.querySelector(`input[value="${cat}"]`);
+    if (radio) radio.checked = true;
+    filteredItems = GRABBY.LISTINGS.filter(l => l.category === cat || l.tags.includes(cat));
+    document.getElementById('pageTitle').textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+  } else if (sort === 'trending') {
+    filteredItems = GRABBY.getTrending();
+    document.getElementById('pageTitle').textContent = '🔥 Trending Now';
+  } else {
+    filteredItems = [...GRABBY.LISTINGS].reverse();
+  }
+
+  renderPage(true);
+  document.getElementById('resultsCount').textContent = `Showing ${filteredItems.length} listing${filteredItems.length !== 1 ? 's' : ''}`;
+});
+</script>
+</body>
+</html>

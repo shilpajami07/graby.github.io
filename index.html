@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grabby — Buy & Sell Locally</title>
+<link rel="stylesheet" href="styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="logo">Grab<span>by</span></a>
+    <div class="nav-search">
+      <span class="search-icon">⌕</span>
+      <input type="text" placeholder="What are you looking for?" id="navSearchInput">
+      <button class="search-btn" onclick="handleNavSearch()">Search</button>
+    </div>
+    <div class="nav-actions">
+      <a href="listings.html" class="nav-link">Browse</a>
+      <a href="profile.html" class="nav-link">Profile</a>
+      <a href="messages.html" class="nav-link nav-msg">
+        <span>Messages</span>
+        <span class="msg-badge">3</span>
+      </a>
+      <a href="post-listing.html" class="btn-sell">+ Sell</a>
+    </div>
+    <button class="hamburger" onclick="toggleMobileMenu()" id="hamburger">☰</button>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="listings.html">Browse</a>
+    <a href="profile.html">Profile</a>
+    <a href="messages.html">Messages</a>
+    <a href="post-listing.html" class="btn-sell-mobile">+ Sell Something</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+  </div>
+  <div class="hero-content">
+    <div class="hero-tag">🔥 Australia's fastest growing marketplace</div>
+    <h1 class="hero-title">Find amazing deals,<br><em>sell in minutes.</em></h1>
+    <p class="hero-sub">Buy & sell locally or nationwide. Fashion, electronics, furniture, and more.</p>
+    <div class="hero-search">
+      <div class="hero-search-bar">
+        <span class="hs-icon">⌕</span>
+        <input type="text" placeholder="What are you looking for?" id="heroSearch">
+        <select id="heroCategory">
+          <option value="">All Categories</option>
+          <option>Vehicles</option>
+          <option>Real Estate</option>
+          <option>Apparel</option>
+          <option>Electronics</option>
+          <option>Home Goods</option>
+          <option>Garden & Outdoor</option>
+          <option>Sporting Goods</option>
+          <option>Toys & Games</option>
+        </select>
+        <button onclick="handleHeroSearch()" class="hs-btn">Search</button>
+      </div>
+      <div class="hero-quick-tags">
+        <span onclick="quickSearch('Vintage')">Vintage</span>
+        <span onclick="quickSearch('iPhone')">iPhone</span>
+        <span onclick="quickSearch('Furniture')">Furniture</span>
+        <span onclick="quickSearch('Sneakers')">Sneakers</span>
+        <span onclick="quickSearch('Bikes')">Bikes</span>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><strong>2.4M+</strong><span>Listings</span></div>
+      <div class="stat-divider"></div>
+      <div class="stat"><strong>840K+</strong><span>Sellers</span></div>
+      <div class="stat-divider"></div>
+      <div class="stat"><strong>4.9★</strong><span>Avg Rating</span></div>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="hero-card-float card-f1">
+      <div class="hcf-img" style="background:linear-gradient(135deg,#ffecd2,#fcb69f)">👟</div>
+      <div class="hcf-info"><strong>$85</strong><span>Nike Jordan 1</span></div>
+    </div>
+    <div class="hero-card-float card-f2">
+      <div class="hcf-img" style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb)">📱</div>
+      <div class="hcf-info"><strong>$420</strong><span>iPhone 14 Pro</span></div>
+    </div>
+    <div class="hero-card-float card-f3">
+      <div class="hcf-img" style="background:linear-gradient(135deg,#d4fc79,#96e6a1)">🎸</div>
+      <div class="hcf-info"><strong>$220</strong><span>Fender Guitar</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- CATEGORIES -->
+<section class="section categories-section">
+  <div class="container">
+    <div class="section-header">
+      <h2>Browse by Category</h2>
+      <a href="listings.html" class="see-all">See all →</a>
+    </div>
+    <div class="categories-grid">
+      <a href="listings.html?cat=vehicles" class="cat-card">
+        <div class="cat-icon" style="background:#fff3e0">🚗</div>
+        <span>Vehicles</span>
+      </a>
+      <a href="listings.html?cat=realestate" class="cat-card">
+        <div class="cat-icon" style="background:#e8f5e9">🏠</div>
+        <span>Real Estate</span>
+      </a>
+      <a href="listings.html?cat=apparel" class="cat-card">
+        <div class="cat-icon" style="background:#fce4ec">👗</div>
+        <span>Apparel</span>
+      </a>
+      <a href="listings.html?cat=classifieds" class="cat-card">
+        <div class="cat-icon" style="background:#f3e5f5">📋</div>
+        <span>Classifieds</span>
+      </a>
+      <a href="listings.html?cat=electronics" class="cat-card">
+        <div class="cat-icon" style="background:#e3f2fd">💻</div>
+        <span>Electronics</span>
+      </a>
+      <a href="listings.html?cat=entertainment" class="cat-card">
+        <div class="cat-icon" style="background:#e8eaf6">🎬</div>
+        <span>Entertainment</span>
+      </a>
+      <a href="listings.html?cat=family" class="cat-card">
+        <div class="cat-icon" style="background:#fff8e1">👨‍👩‍👧</div>
+        <span>Family</span>
+      </a>
+      <a href="listings.html?cat=free" class="cat-card free-cat">
+        <div class="cat-icon" style="background:#e0f7fa">🎁</div>
+        <span>Free Stuff</span>
+        <div class="free-badge">FREE</div>
+      </a>
+      <a href="listings.html?cat=garden" class="cat-card">
+        <div class="cat-icon" style="background:#f1f8e9">🌿</div>
+        <span>Garden & Outdoor</span>
+      </a>
+      <a href="listings.html?cat=hobbies" class="cat-card">
+        <div class="cat-icon" style="background:#fbe9e7">🎨</div>
+        <span>Hobbies</span>
+      </a>
+      <a href="listings.html?cat=homegoods" class="cat-card">
+        <div class="cat-icon" style="background:#f9fbe7">🛋️</div>
+        <span>Home Goods</span>
+      </a>
+      <a href="listings.html?cat=music" class="cat-card">
+        <div class="cat-icon" style="background:#fce4ec">🎵</div>
+        <span>Musical Instruments</span>
+      </a>
+      <a href="listings.html?cat=office" class="cat-card">
+        <div class="cat-icon" style="background:#e0f2f1">💼</div>
+        <span>Office Supplies</span>
+      </a>
+      <a href="listings.html?cat=pets" class="cat-card">
+        <div class="cat-icon" style="background:#fff3e0">🐾</div>
+        <span>Pet Supplies</span>
+      </a>
+      <a href="listings.html?cat=sports" class="cat-card">
+        <div class="cat-icon" style="background:#e8f5e9">⚽</div>
+        <span>Sporting Goods</span>
+      </a>
+      <a href="listings.html?cat=toys" class="cat-card">
+        <div class="cat-icon" style="background:#f3e5f5">🧸</div>
+        <span>Toys & Games</span>
+      </a>
+      <a href="listings.html?cat=buygroups" class="cat-card span-2">
+        <div class="cat-icon" style="background:#e3f2fd">🤝</div>
+        <span>Buy & Sell Groups</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURED LISTINGS -->
+<section class="section featured-section">
+  <div class="container">
+    <div class="section-header">
+      <h2>Featured Listings</h2>
+      <a href="listings.html" class="see-all">See all →</a>
+    </div>
+    <div class="listings-grid" id="featuredGrid">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- TRENDING -->
+<section class="section trending-section">
+  <div class="container">
+    <div class="section-header">
+      <h2>🔥 Trending Now</h2>
+      <a href="listings.html?sort=trending" class="see-all">See all →</a>
+    </div>
+    <div class="trending-scroll" id="trendingScroll">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- RECENTLY ADDED -->
+<section class="section recent-section">
+  <div class="container">
+    <div class="section-header">
+      <h2>Recently Added</h2>
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="filterRecent('all', this)">All</button>
+        <button class="filter-tab" onclick="filterRecent('fashion', this)">Fashion</button>
+        <button class="filter-tab" onclick="filterRecent('electronics', this)">Electronics</button>
+        <button class="filter-tab" onclick="filterRecent('home', this)">Home</button>
+        <button class="filter-tab" onclick="filterRecent('sports', this)">Sports</button>
+      </div>
+    </div>
+    <div class="listings-grid" id="recentGrid">
+      <!-- Populated by JS -->
+    </div>
+    <div class="load-more-wrap">
+      <button class="btn-load-more" onclick="loadMore()">Load more listings</button>
+    </div>
+  </div>
+</section>
+
+<!-- SELL CTA -->
+<section class="sell-cta">
+  <div class="container">
+    <div class="cta-inner">
+      <div class="cta-text">
+        <h2>Ready to sell something?</h2>
+        <p>List your first item in under 2 minutes. No listing fees. Keep more of what you earn.</p>
+        <div class="cta-features">
+          <span>✓ Free to list</span>
+          <span>✓ Instant visibility</span>
+          <span>✓ Secure payments</span>
+        </div>
+        <a href="post-listing.html" class="btn-cta-primary">Start selling →</a>
+      </div>
+      <div class="cta-visual">
+        <div class="cta-phone">
+          <div class="ctp-header">
+            <div class="ctp-dot"></div><div class="ctp-dot"></div><div class="ctp-dot"></div>
+          </div>
+          <div class="ctp-img">📸</div>
+          <div class="ctp-form">
+            <div class="ctp-field">Title: Nike Air Max 90</div>
+            <div class="ctp-field accent">Price: $85</div>
+            <div class="ctp-field">Location: Melbourne, VIC</div>
+          </div>
+          <div class="ctp-btn">Publish listing ✓</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="logo">Grab<span>by</span></div>
+        <p>Australia's modern marketplace for buying and selling locally and nationwide.</p>
+        <div class="social-links">
+          <a href="#">Instagram</a>
+          <a href="#">TikTok</a>
+          <a href="#">Twitter</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Buy</h4>
+        <a href="listings.html">Browse listings</a>
+        <a href="listings.html?cat=free">Free stuff</a>
+        <a href="listings.html?sort=nearby">Near me</a>
+        <a href="#">How buying works</a>
+      </div>
+      <div class="footer-col">
+        <h4>Sell</h4>
+        <a href="post-listing.html">Post a listing</a>
+        <a href="#">Seller guide</a>
+        <a href="#">Pricing</a>
+        <a href="#">Seller dashboard</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="#">About</a>
+        <a href="#">Careers</a>
+        <a href="#">Press</a>
+        <a href="#">Contact</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Grabby Pty Ltd. All rights reserved.</span>
+      <div>
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="#">Safety</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- LISTING MODAL -->
+<div class="modal-overlay" id="listingModal" onclick="closeModal(event)">
+  <div class="modal-box" id="modalBox">
+    <button class="modal-close" onclick="closeListingModal()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product — Grabby</title>
+<link rel="stylesheet" href="styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="logo">Grab<span>by</span></a>
+    <div class="nav-search">
+      <span class="search-icon">⌕</span>
+      <input type="text" placeholder="Search listings..." id="navSearchInput">
+      <button class="search-btn" onclick="handleNavSearch()">Search</button>
+    </div>
+    <div class="nav-actions">
+      <a href="listings.html" class="nav-link">Browse</a>
+      <a href="profile.html" class="nav-link">Profile</a>
+      <a href="messages.html" class="nav-link nav-msg"><span>Messages</span><span class="msg-badge">3</span></a>
+      <a href="post-listing.html" class="btn-sell">+ Sell</a>
+    </div>
+    <button class="hamburger" onclick="toggleMobileMenu()">☰</button>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="listings.html">Browse</a>
+    <a href="profile.html">Profile</a>
+    <a href="messages.html">Messages</a>
+    <a href="post-listing.html" class="btn-sell-mobile">+ Sell Something</a>
+  </div>
+</nav>
+
+<div class="product-page" id="productPage">
+  <!-- Populated by JS -->
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="listingModal" onclick="closeModal(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeListingModal()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+const REVIEWS_DATA = [
+  { name:"Sarah T.", av:"ST", avBg:"linear-gradient(135deg,#3b82f6,#8b5cf6)", rating:5, text:"Super fast shipping, exactly as described. Would definitely buy again!", date:"2 days ago" },
+  { name:"Mike R.", av:"MR", avBg:"linear-gradient(135deg,#10b981,#059669)", rating:5, text:"Great seller, very responsive and item was even better than the photos!", date:"1 week ago" },
+  { name:"Emma G.", av:"EG", avBg:"linear-gradient(135deg,#f59e0b,#ef4444)", rating:4, text:"Good condition as described. Took a bit longer to reply but shipped quickly.", date:"2 weeks ago" },
+];
+
+function renderStars(rating) {
+  return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const id = parseInt(params.get('id')) || 1;
+  const listing = GRABBY.getListingById(id);
+  const page = document.getElementById('productPage');
+
+  if (!listing) {
+    page.innerHTML = '<div class="empty-state"><div class="emoji">😕</div><h3>Listing not found</h3><p><a href="listings.html" style="color:var(--accent)">Browse all listings</a></p></div>';
+    return;
+  }
+
+  document.title = `${listing.title} — Grabby`;
+  const isFav = (GRABBY.USERS.currentUser?.favorites || []).includes(id);
+  const seller = GRABBY.getUserById(listing.seller) || {};
+
+  // Related listings
+  const related = GRABBY.LISTINGS.filter(l => l.id !== id && (l.category === listing.category || l.tags.some(t => listing.tags.includes(t)))).slice(0,4);
+
+  page.innerHTML = `
+    <div class="breadcrumb">
+      <a href="index.html">Home</a> › 
+      <a href="listings.html?cat=${listing.category}">${listing.category}</a> › 
+      <span>${listing.title.substring(0,30)}...</span>
+    </div>
+
+    <div class="product-grid">
+      <div class="product-images">
+        <div class="main-img" style="background:${listing.bg}" id="mainImg">${listing.img}</div>
+        <div class="thumb-row">
+          <div class="thumb active" style="background:${listing.bg}">${listing.img}</div>
+          <div class="thumb" style="background:linear-gradient(135deg,#f0f0f0,#e0e0e0)" onclick="changeThumb(this, '#f0f0f0')">📷</div>
+          <div class="thumb" style="background:linear-gradient(135deg,#e8f5e9,#c8e6c9)" onclick="changeThumb(this, '#e8f5e9')">🔍</div>
+        </div>
+      </div>
+
+      <div class="product-info">
+        <div class="product-price">${listing.price === 0 ? 'FREE' : '$'+listing.price}</div>
+        <div class="product-title">${listing.title}</div>
+        <div class="product-badges">
+          <span class="badge badge-cond">${listing.condition}</span>
+          <span class="badge badge-loc">📍 ${listing.location}</span>
+          ${listing.shipping ? '<span class="badge badge-ship">📦 Shipping</span>' : ''}
+          ${listing.pickup ? '<span class="badge" style="background:#e3f2fd;color:#1565c0">🤝 Pickup</span>' : ''}
+        </div>
+
+        <div class="product-seller-card" onclick="window.location.href='profile.html?u=${listing.seller}'">
+          <div class="psc-header">
+            <div class="psc-av">${listing.sellerName.slice(0,2).toUpperCase()}</div>
+            <div>
+              <div class="psc-name">${listing.sellerName}</div>
+              <div class="psc-verified">✓ Verified seller</div>
+            </div>
+            <span style="margin-left:auto;font-size:13px;color:var(--accent)">View profile →</span>
+          </div>
+          <div class="psc-stats">
+            <div class="psc-stat"><span class="psc-stat-num">⭐ ${listing.sellerRating}</span><div class="psc-stat-lbl">Rating</div></div>
+            <div class="psc-stat"><span class="psc-stat-num">${listing.sellerSales}</span><div class="psc-stat-lbl">Sales</div></div>
+            <div class="psc-stat"><span class="psc-stat-num">&lt;1h</span><div class="psc-stat-lbl">Response</div></div>
+          </div>
+        </div>
+
+        <div class="product-desc">${listing.desc}</div>
+
+        <div class="product-actions">
+          <button class="btn-primary" onclick="window.location.href='messages.html'">💬 Message seller</button>
+          <button class="btn-secondary" id="favBtn" onclick="toggleProductFav(${id})" style="${isFav ? 'border-color:var(--accent);color:var(--accent)' : ''}">
+            ${isFav ? '❤️ Saved to favorites' : '♡ Save to favorites'}
+          </button>
+          <button class="btn-secondary" onclick="makeOffer(${listing.price})">🤝 Make an offer</button>
+        </div>
+
+        <div class="product-meta-grid">
+          <div class="pmg-item"><div class="pmg-label">Posted</div><div class="pmg-value">${listing.time}</div></div>
+          <div class="pmg-item"><div class="pmg-label">Views</div><div class="pmg-value">👁 ${listing.views}</div></div>
+          <div class="pmg-item"><div class="pmg-label">Saves</div><div class="pmg-value">❤️ ${listing.favorites}</div></div>
+          <div class="pmg-item"><div class="pmg-label">Category</div><div class="pmg-value">${listing.category}</div></div>
+        </div>
+
+        <div style="margin-top:16px;padding:14px;background:var(--surface2);border-radius:var(--radius-sm);border:1px solid var(--border);font-size:13px;color:var(--text2)">
+          🛡️ <strong>Buyer protection:</strong> Pay securely through Grabby. Get a refund if your item doesn't arrive.
+        </div>
+      </div>
+    </div>
+
+    <!-- REVIEWS -->
+    <div class="reviews-section">
+      <div class="section-header" style="margin-bottom:20px">
+        <h2>Seller Reviews</h2>
+        <span style="color:var(--text2);font-size:14px">⭐ ${listing.sellerRating} avg · ${REVIEWS_DATA.length} reviews</span>
+      </div>
+      ${REVIEWS_DATA.map(r => `
+        <div class="review-card">
+          <div class="review-header">
+            <div class="review-av" style="background:${r.avBg}">${r.av}</div>
+            <div>
+              <div style="font-size:14px;font-weight:600">${r.name}</div>
+              <div class="review-stars">${renderStars(r.rating)}</div>
+            </div>
+            <div class="review-date">${r.date}</div>
+          </div>
+          <div class="review-text">${r.text}</div>
+        </div>`).join('')}
+    </div>
+
+    <!-- RELATED -->
+    ${related.length ? `
+    <div class="reviews-section">
+      <div class="section-header" style="margin-bottom:20px">
+        <h2>Similar listings</h2>
+        <a href="listings.html?cat=${listing.category}" class="see-all">See all →</a>
+      </div>
+      <div class="listings-grid">${related.map(l => buildListingCard(l)).join('')}</div>
+    </div>` : ''}
+  `;
+});
+
+function changeThumb(el, bg) {
+  document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function toggleProductFav(id) {
+  const user = GRABBY.USERS.currentUser;
+  const idx = user.favorites.indexOf(id);
+  const btn = document.getElementById('favBtn');
+  if (idx === -1) {
+    user.favorites.push(id);
+    btn.innerHTML = '❤️ Saved to favorites';
+    btn.style.borderColor = 'var(--accent)';
+    btn.style.color = 'var(--accent)';
+    showToast('❤️ Saved to favorites');
+  } else {
+    user.favorites.splice(idx, 1);
+    btn.innerHTML = '♡ Save to favorites';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+    showToast('Removed from favorites');
+  }
+}
+
+function makeOffer(price) {
+  const suggested = Math.round(price * 0.9);
+  const offer = prompt(`Make an offer (suggested: $${suggested})`);
+  if (offer) {
+    showToast(`✅ Offer of $${offer} sent to seller!`);
+    setTimeout(() => window.location.href = 'messages.html', 1000);
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile — Grabby</title>
+<link rel="stylesheet" href="styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  .profile-tabs { display:flex; border-bottom:1px solid var(--border); gap:0; margin-bottom:24px; }
+  .profile-tab { padding:14px 24px; font-size:15px; font-weight:500; color:var(--text2); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:var(--transition); background:none; border-top:none; border-left:none; border-right:none; }
+  .profile-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .profile-tab:hover { color:var(--text); }
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; }
+  .review-summary { display:grid; grid-template-columns:auto 1fr; gap:32px; align-items:center; background:var(--surface2); border-radius:var(--radius); padding:24px; margin-bottom:24px; border:1px solid var(--border); }
+  .rating-big { text-align:center; }
+  .rating-big .num { font-family:var(--font-display); font-size:52px; font-weight:800; line-height:1; color:var(--text); }
+  .rating-big .stars { font-size:22px; color:#fbbf24; margin:4px 0; }
+  .rating-big .count { font-size:13px; color:var(--text3); }
+  .rating-bars { flex:1; }
+  .rating-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .rating-row span:first-child { font-size:12px; width:30px; text-align:right; color:var(--text2); }
+  .rating-bar { flex:1; height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+  .rating-fill { height:100%; background:#fbbf24; border-radius:3px; }
+  .rating-row span:last-child { font-size:12px; color:var(--text3); width:24px; }
+  .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+  .stat-card { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius); padding:20px; text-align:center; }
+  .stat-card strong { font-family:var(--font-display); font-size:28px; font-weight:800; display:block; }
+  .stat-card span { font-size:13px; color:var(--text3); }
+</style>
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="logo">Grab<span>by</span></a>
+    <div class="nav-search">
+      <span class="search-icon">⌕</span>
+      <input type="text" placeholder="Search listings..." id="navSearchInput">
+      <button class="search-btn" onclick="handleNavSearch()">Search</button>
+    </div>
+    <div class="nav-actions">
+      <a href="listings.html" class="nav-link">Browse</a>
+      <a href="profile.html" class="nav-link" style="color:var(--accent)">Profile</a>
+      <a href="messages.html" class="nav-link nav-msg"><span>Messages</span><span class="msg-badge">3</span></a>
+      <a href="post-listing.html" class="btn-sell">+ Sell</a>
+    </div>
+    <button class="hamburger" onclick="toggleMobileMenu()">☰</button>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="listings.html">Browse</a>
+    <a href="profile.html">Profile</a>
+    <a href="messages.html">Messages</a>
+    <a href="post-listing.html" class="btn-sell-mobile">+ Sell Something</a>
+  </div>
+</nav>
+
+<div class="profile-page" id="profilePage">
+  <!-- Populated by JS -->
+</div>
+
+<div class="modal-overlay" id="listingModal" onclick="closeModal(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeListingModal()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+const REVIEWS_ALL = [
+  { name:"Sarah T.", av:"ST", avBg:"linear-gradient(135deg,#3b82f6,#8b5cf6)", rating:5, text:"Super fast shipping, exactly as described. Would definitely buy again!", date:"2 days ago", item:"Nike Air Max 90" },
+  { name:"Mike R.", av:"MR", avBg:"linear-gradient(135deg,#10b981,#059669)", rating:5, text:"Great seller, very responsive and item was even better than the photos!", date:"1 week ago", item:"Levi's 501 Jeans" },
+  { name:"Emma G.", av:"EG", avBg:"linear-gradient(135deg,#f59e0b,#ef4444)", rating:4, text:"Good condition as described. Took a bit longer to reply but shipped quickly.", date:"2 weeks ago", item:"Sony Headphones" },
+  { name:"Chris P.", av:"CP", avBg:"linear-gradient(135deg,#8b5cf6,#ec4899)", rating:5, text:"Amazing seller! The item was even better than expected. Fast shipping too.", date:"1 month ago", item:"Vintage Camera" },
+];
+
+function renderStars(r) { return '★'.repeat(r) + '☆'.repeat(5-r); }
+
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const userId = params.get('u') || 'jake_k';
+  const isOwnProfile = userId === 'currentUser' || !params.get('u');
+
+  const user = isOwnProfile ? GRABBY.USERS.currentUser : (GRABBY.USERS[userId] || GRABBY.USERS.jake_k);
+  const listings = GRABBY.LISTINGS.filter(l => (user.listings || []).includes(l.id) || l.seller === userId);
+  const favListings = GRABBY.LISTINGS.filter(l => (GRABBY.USERS.currentUser.favorites || []).includes(l.id));
+
+  document.title = `${user.name} — Grabby`;
+  const page = document.getElementById('profilePage');
+
+  page.innerHTML = `
+    <div class="profile-header-card">
+      <div class="profile-cover">
+        <div class="profile-av-wrap">
+          <div class="profile-av-lg">${user.avatar}</div>
+        </div>
+      </div>
+      <div class="profile-info-section">
+        <div class="profile-name-row">
+          <div>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+              <div class="profile-name">${user.name}</div>
+              ${user.verified ? '<span class="profile-verified">✓ Verified</span>' : ''}
+              ${user.topSeller ? '<span style="background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px">🔥 Top Seller</span>' : ''}
+            </div>
+            <div class="profile-handle">${user.handle} · ${user.location} · Member since ${user.joined}</div>
+          </div>
+          <div class="profile-actions">
+            ${isOwnProfile
+              ? `<button onclick="editProfile()" class="btn-follow">Edit Profile</button>
+                 <a href="post-listing.html" class="btn-msg-seller">+ New Listing</a>`
+              : `<button onclick="followUser()" class="btn-follow" id="followBtn">Follow</button>
+                 <button onclick="window.location.href='messages.html'" class="btn-msg-seller">💬 Message</button>`
+            }
+          </div>
+        </div>
+        <div class="profile-bio">${user.bio}</div>
+        <div class="profile-stats">
+          <div class="profile-stat"><strong>${user.sales}</strong><span>Sales</span></div>
+          <div class="profile-stat"><strong>${user.rating > 0 ? user.rating : '—'}</strong><span>Rating</span></div>
+          <div class="profile-stat"><strong>${listings.length || user.listings?.length || 0}</strong><span>Active listings</span></div>
+          <div class="profile-stat"><strong>98%</strong><span>Response rate</span></div>
+        </div>
+      </div>
+    </div>
+
+    ${isOwnProfile ? `
+    <div class="stats-grid">
+      <div class="stat-card"><strong>$1,240</strong><span>This month</span></div>
+      <div class="stat-card"><strong>${listings.length || 0}</strong><span>Active listings</span></div>
+      <div class="stat-card"><strong>${favListings.length}</strong><span>Saved items</span></div>
+      <div class="stat-card"><strong>98%</strong><span>Positive reviews</span></div>
+    </div>` : ''}
+
+    <div class="profile-tabs">
+      <button class="profile-tab active" onclick="showTab('listings', this)">Listings (${listings.length || GRABBY.LISTINGS.filter(l=>l.seller===userId).length})</button>
+      ${isOwnProfile ? `<button class="profile-tab" onclick="showTab('favorites', this)">Saved (${favListings.length})</button>` : ''}
+      <button class="profile-tab" onclick="showTab('reviews', this)">Reviews (${REVIEWS_ALL.length})</button>
+      ${isOwnProfile ? `<button class="profile-tab" onclick="showTab('settings', this)">Settings</button>` : ''}
+    </div>
+
+    <div class="tab-panel active" id="tab-listings">
+      ${listings.length > 0
+        ? `<div class="listings-grid">${listings.map(l => buildListingCard(l)).join('')}</div>`
+        : `<div class="empty-state"><div class="emoji">📦</div><h3>No active listings</h3><p>This user hasn't listed anything yet</p></div>`
+      }
+    </div>
+
+    ${isOwnProfile ? `
+    <div class="tab-panel" id="tab-favorites">
+      ${favListings.length > 0
+        ? `<div class="listings-grid">${favListings.map(l => buildListingCard(l)).join('')}</div>`
+        : `<div class="empty-state"><div class="emoji">❤️</div><h3>No saved items yet</h3><p>Heart a listing to save it here</p></div>`
+      }
+    </div>` : ''}
+
+    <div class="tab-panel" id="tab-reviews">
+      <div class="review-summary">
+        <div class="rating-big">
+          <div class="num">${user.rating > 0 ? user.rating : '4.9'}</div>
+          <div class="stars">★★★★★</div>
+          <div class="count">${REVIEWS_ALL.length} reviews</div>
+        </div>
+        <div class="rating-bars">
+          <div class="rating-row"><span>5★</span><div class="rating-bar"><div class="rating-fill" style="width:82%"></div></div><span>11</span></div>
+          <div class="rating-row"><span>4★</span><div class="rating-bar"><div class="rating-fill" style="width:15%"></div></div><span>2</span></div>
+          <div class="rating-row"><span>3★</span><div class="rating-bar"><div class="rating-fill" style="width:0%"></div></div><span>0</span></div>
+          <div class="rating-row"><span>2★</span><div class="rating-bar"><div class="rating-fill" style="width:0%"></div></div><span>0</span></div>
+          <div class="rating-row"><span>1★</span><div class="rating-bar"><div class="rating-fill" style="width:0%"></div></div><span>0</span></div>
+        </div>
+      </div>
+      ${REVIEWS_ALL.map(r => `
+        <div class="review-card">
+          <div class="review-header">
+            <div class="review-av" style="background:${r.avBg}">${r.av}</div>
+            <div>
+              <div style="font-size:14px;font-weight:600">${r.name}</div>
+              <div style="font-size:12px;color:var(--text3)">Re: ${r.item}</div>
+            </div>
+            <div style="margin-left:auto;text-align:right">
+              <div class="review-stars">${renderStars(r.rating)}</div>
+              <div class="review-date">${r.date}</div>
+            </div>
+          </div>
+          <div class="review-text">${r.text}</div>
+        </div>`).join('')}
+    </div>
+
+    ${isOwnProfile ? `
+    <div class="tab-panel" id="tab-settings">
+      <div class="form-section">
+        <h2>Profile Settings</h2>
+        <div class="form-group"><label>Display Name</label><input type="text" class="form-control" value="${user.name}"></div>
+        <div class="form-group"><label>Username</label><input type="text" class="form-control" value="${user.handle}"></div>
+        <div class="form-group"><label>Bio</label><textarea class="form-control">${user.bio}</textarea></div>
+        <div class="form-group"><label>Location</label><input type="text" class="form-control" value="${user.location}"></div>
+        <div class="form-group"><label>Email</label><input type="email" class="form-control" value="alex@example.com"></div>
+        <div class="form-group"><label>Phone</label><input type="tel" class="form-control" placeholder="+61 400 000 000"></div>
+        <button class="btn-primary" style="width:auto;padding:12px 28px" onclick="saveSettings()">Save Changes</button>
+      </div>
+      <div class="form-section">
+        <h2>Notifications</h2>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          ${['New messages','Offer received','Price drops on saved items','New followers','Weekly digest'].map(n => `
+            <label style="display:flex;justify-content:space-between;align-items:center;cursor:pointer">
+              <span style="font-size:15px">${n}</span>
+              <input type="checkbox" checked style="width:18px;height:18px;accent-color:var(--accent)">
+            </label>`).join('')}
+        </div>
+      </div>
+    </div>` : ''}
+  `;
+});
+
+function showTab(id, btn) {
+  document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(`tab-${id}`)?.classList.add('active');
+}
+
+function editProfile() { showTab('settings', document.querySelectorAll('.profile-tab')[3] || document.querySelectorAll('.profile-tab')[2]); }
+
+function followUser() {
+  const btn = document.getElementById('followBtn');
+  const isFollowing = btn.textContent === 'Following';
+  btn.textContent = isFollowing ? 'Follow' : 'Following';
+  btn.style.background = isFollowing ? '' : 'var(--accent)';
+  btn.style.color = isFollowing ? '' : 'white';
+  showToast(isFollowing ? 'Unfollowed' : '✅ Now following!');
+}
+
+function saveSettings() { showToast('✅ Profile updated!'); }
+</script>
+</body>
+</html>

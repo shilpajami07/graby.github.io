@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Post a Listing — Grabby</title>
+<link rel="stylesheet" href="styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  .progress-bar { display:flex; gap:0; margin-bottom:32px; }
+  .progress-step { flex:1; height:4px; background:var(--border); border-radius:2px; transition:background .3s; }
+  .progress-step.done { background:var(--accent); }
+  .progress-labels { display:flex; justify-content:space-between; margin-bottom:8px; }
+  .progress-label { font-size:12px; color:var(--text3); font-weight:500; }
+  .progress-label.active { color:var(--accent); }
+  .ai-suggest {
+    background:linear-gradient(135deg,var(--accent-soft),#fff3e0);
+    border:1.5px solid #ffd5cc; border-radius:var(--radius-sm);
+    padding:14px; margin-top:10px; display:none;
+  }
+  .ai-suggest h4 { font-size:13px; font-weight:600; color:var(--accent); margin-bottom:6px; }
+  .ai-suggest p { font-size:13px; color:var(--text2); line-height:1.5; }
+  .ai-suggest .apply-btn { font-size:12px; color:var(--accent); background:none; border:none; cursor:pointer; font-weight:600; margin-top:6px; padding:0; }
+  .preview-card {
+    position:sticky; top:calc(var(--nav-h)+16px);
+    background:var(--surface); border:1.5px solid var(--border);
+    border-radius:var(--radius-lg); overflow:hidden;
+  }
+  .preview-header { padding:16px 20px; border-bottom:1px solid var(--border); font-size:13px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:.5px; }
+  .preview-img { height:180px; display:flex; align-items:center; justify-content:center; font-size:60px; background:linear-gradient(135deg,#ffecd2,#fcb69f); }
+  .preview-body { padding:16px; }
+  .preview-price { font-family:var(--font-display); font-size:24px; font-weight:800; }
+  .preview-title { font-size:15px; font-weight:500; margin:4px 0 8px; color:var(--text2); }
+  .preview-meta { font-size:12px; color:var(--text3); }
+  .steps-layout { display:grid; grid-template-columns:1fr 300px; gap:32px; align-items:start; }
+</style>
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="logo">Grab<span>by</span></a>
+    <div class="nav-search">
+      <span class="search-icon">⌕</span>
+      <input type="text" placeholder="Search listings..." id="navSearchInput">
+      <button class="search-btn" onclick="handleNavSearch()">Search</button>
+    </div>
+    <div class="nav-actions">
+      <a href="listings.html" class="nav-link">Browse</a>
+      <a href="profile.html" class="nav-link">Profile</a>
+      <a href="messages.html" class="nav-link nav-msg"><span>Messages</span><span class="msg-badge">3</span></a>
+      <a href="post-listing.html" class="btn-sell" style="background:var(--text)">+ Sell</a>
+    </div>
+    <button class="hamburger" onclick="toggleMobileMenu()">☰</button>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="listings.html">Browse</a>
+    <a href="profile.html">Profile</a>
+    <a href="messages.html">Messages</a>
+    <a href="post-listing.html" class="btn-sell-mobile">+ Sell Something</a>
+  </div>
+</nav>
+
+<div class="post-listing-page">
+  <div class="post-header">
+    <h1>List an item for sale</h1>
+    <p>It's free! Fill in the details below and your listing goes live instantly.</p>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-labels">
+    <span class="progress-label active" id="lbl-0">Photos</span>
+    <span class="progress-label" id="lbl-1">Details</span>
+    <span class="progress-label" id="lbl-2">Pricing</span>
+    <span class="progress-label" id="lbl-3">Delivery</span>
+    <span class="progress-label" id="lbl-4">Publish</span>
+  </div>
+  <div class="progress-bar">
+    <div class="progress-step done" id="prog-0"></div>
+    <div class="progress-step" id="prog-1"></div>
+    <div class="progress-step" id="prog-2"></div>
+    <div class="progress-step" id="prog-3"></div>
+    <div class="progress-step" id="prog-4"></div>
+  </div>
+
+  <div class="steps-layout">
+    <div class="form-left">
+
+      <!-- PHOTOS -->
+      <div class="form-section" id="step-photos">
+        <h2>📸 Add photos</h2>
+        <div class="img-upload-area" onclick="triggerUpload()">
+          <div class="upload-icon">📷</div>
+          <p>Drag & drop photos here, or <strong>click to browse</strong></p>
+          <p style="font-size:12px;color:var(--text3);margin-top:6px">Up to 10 photos · JPG, PNG, HEIC · Max 20MB each</p>
+          <input type="file" id="imgInput" multiple accept="image/*" style="display:none" onchange="handleImgUpload(event)">
+        </div>
+        <div class="img-preview-grid" id="imgPreview"></div>
+        <p style="font-size:12px;color:var(--text3);margin-top:10px">💡 Tip: Good photos get 3x more inquiries. Natural lighting works best.</p>
+      </div>
+
+      <!-- DETAILS -->
+      <div class="form-section" id="step-details">
+        <h2>📝 Item details</h2>
+        <div class="form-group">
+          <label>Title *</label>
+          <input type="text" class="form-control" id="listingTitle" placeholder="e.g. Nike Air Max 90 — White UK10" oninput="updatePreview()">
+          <div style="font-size:12px;color:var(--text3);margin-top:4px"><span id="titleCount">0</span>/80 characters</div>
+        </div>
+        <div class="form-group">
+          <label>Category *</label>
+          <select class="form-control" id="listingCat" onchange="updatePreview()">
+            <option value="">Select a category</option>
+            <option value="vehicles">🚗 Vehicles</option>
+            <option value="realestate">🏠 Real Estate</option>
+            <option value="apparel">👗 Apparel</option>
+            <option value="electronics">💻 Electronics</option>
+            <option value="homegoods">🛋️ Home Goods</option>
+            <option value="garden">🌿 Garden & Outdoor</option>
+            <option value="hobbies">🎨 Hobbies</option>
+            <option value="music">🎵 Musical Instruments</option>
+            <option value="sports">⚽ Sporting Goods</option>
+            <option value="toys">🧸 Toys & Games</option>
+            <option value="pets">🐾 Pet Supplies</option>
+            <option value="office">💼 Office Supplies</option>
+            <option value="free">🎁 Free (no charge)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Condition *</label>
+          <div class="condition-options">
+            <button type="button" class="cond-btn" onclick="selectCond(this,'New')">✨ New</button>
+            <button type="button" class="cond-btn" onclick="selectCond(this,'Like new')">🌟 Like new</button>
+            <button type="button" class="cond-btn" onclick="selectCond(this,'Good')">👍 Good</button>
+            <button type="button" class="cond-btn" onclick="selectCond(this,'Fair')">🔧 Fair</button>
+            <button type="button" class="cond-btn" onclick="selectCond(this,'Parts only')">⚙️ Parts only</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Description *</label>
+          <textarea class="form-control" id="listingDesc" rows="5" placeholder="Describe your item — include brand, size, colour, defects, what's included..."></textarea>
+          <div id="aiSuggest" class="ai-suggest">
+            <h4>✨ AI description suggestion</h4>
+            <p id="aiText">Loading suggestion...</p>
+            <button class="apply-btn" onclick="applyAISuggest()">Apply this description →</button>
+          </div>
+          <button type="button" onclick="generateAIDesc()" style="font-size:12px;color:var(--accent);background:none;border:none;cursor:pointer;margin-top:8px;font-weight:500">✨ Generate AI description</button>
+        </div>
+        <div class="form-group">
+          <label>Tags (optional)</label>
+          <input type="text" class="form-control" id="listingTags" placeholder="e.g. vintage, rare, nike, unworn (comma separated)">
+        </div>
+      </div>
+
+      <!-- PRICING -->
+      <div class="form-section" id="step-pricing">
+        <h2>💰 Pricing</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Price *</label>
+            <div class="price-input-wrap">
+              <span class="price-symbol">$</span>
+              <input type="number" class="form-control" id="listingPrice" placeholder="0.00" min="0" oninput="updatePreview();checkFreeItem()">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Accept offers?</label>
+            <select class="form-control" id="listingOffers">
+              <option value="yes">Yes — open to offers</option>
+              <option value="firm">No — firm price</option>
+              <option value="only">Offers only (name price)</option>
+            </select>
+          </div>
+        </div>
+        <div id="priceEstimate" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;font-size:13px;color:var(--text2)">
+          💡 Based on similar items, <strong>$85–$120</strong> is the typical price range for this category.
+        </div>
+        <div id="freeItemNote" style="display:none;background:#e0f7fa;border:1px solid #b2ebf2;border-radius:var(--radius-sm);padding:14px;font-size:13px;color:#00695c;margin-top:10px">
+          🎁 You're listing a free item! These get <strong>3x more views</strong>. Consider listing instead to reduce waste.
+        </div>
+      </div>
+
+      <!-- DELIVERY -->
+      <div class="form-section" id="step-delivery">
+        <h2>🚚 Delivery options</h2>
+        <div class="shipping-options">
+          <div class="shipping-opt" id="opt-pickup" onclick="toggleShip('pickup')">
+            <div class="shipping-opt-icon">🤝</div>
+            <div class="shipping-opt-text">
+              <strong>Local pickup</strong>
+              <span>Buyer collects from you — free!</span>
+            </div>
+            <input type="checkbox" id="check-pickup" style="margin-left:auto;accent-color:var(--accent);width:18px;height:18px" onchange="updatePreview()">
+          </div>
+          <div class="shipping-opt" id="opt-shipping" onclick="toggleShip('shipping')">
+            <div class="shipping-opt-icon">📦</div>
+            <div class="shipping-opt-text">
+              <strong>Postage / shipping</strong>
+              <span>Send nationwide via Australia Post, Sendle, etc.</span>
+            </div>
+            <input type="checkbox" id="check-shipping" style="margin-left:auto;accent-color:var(--accent);width:18px;height:18px" onchange="updatePreview()">
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:16px">
+          <label>Location / suburb *</label>
+          <input type="text" class="form-control" id="listingLocation" placeholder="e.g. Fitzroy, Melbourne VIC" oninput="updatePreview()">
+        </div>
+      </div>
+
+      <!-- PUBLISH -->
+      <div class="form-section" id="step-publish">
+        <h2>🚀 Ready to publish?</h2>
+        <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px">Listing checklist</div>
+          <div id="checklist" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6">
+          By publishing, you agree to our <a href="#" style="color:var(--accent)">Terms of Service</a> and 
+          <a href="#" style="color:var(--accent)">Marketplace Guidelines</a>. 
+          Listing is free. Grabby takes an 8% fee on completed sales.
+        </div>
+        <button class="form-submit" onclick="publishListing()">🚀 Publish Listing — Free</button>
+      </div>
+    </div>
+
+    <!-- LIVE PREVIEW -->
+    <div class="preview-card">
+      <div class="preview-header">Live preview</div>
+      <div class="preview-img" id="previewImg">📷</div>
+      <div class="preview-body">
+        <div class="preview-price" id="previewPrice">$—</div>
+        <div class="preview-title" id="previewTitle">Your item title will appear here</div>
+        <div class="preview-meta" id="previewMeta">📍 Your location</div>
+        <div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap" id="previewBadges"></div>
+        <button style="width:100%;margin-top:14px;padding:10px;border-radius:var(--radius-sm);background:var(--accent);color:white;border:none;font-size:13px;font-weight:600">Message seller</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+let selectedCondition = '';
+const EMOJI_MAP = { vehicles:'🚗', realestate:'🏠', apparel:'👗', electronics:'💻', homegoods:'🛋️', garden:'🌿', hobbies:'🎨', music:'🎵', sports:'⚽', toys:'🧸', pets:'🐾', office:'💼', free:'🎁' };
+
+const AI_DESC = [
+  "Gently used and in excellent condition. Shows minimal signs of wear — perfect for everyday use. Smoke-free and pet-free home. Happy to answer any questions! Collection preferred but can post for buyer's expense.",
+  "This is a fantastic item in great condition. Bought originally from [retailer] and used lightly. Everything works perfectly as it should. Happy to negotiate on price for serious buyers. Local pickup preferred.",
+  "Selling as I've upgraded / no longer need. Item is as described, photos don't do it justice! Great condition, no major scratches or defects. Happy to meet locally or arrange postage.",
+];
+
+function triggerUpload() { document.getElementById('imgInput').click(); }
+
+function handleImgUpload(event) {
+  const files = Array.from(event.target.files);
+  const preview = document.getElementById('imgPreview');
+  const emojis = ['👟','📱','🛋️','🎸','🎧','📷','🎮','🌿','⌚','🧥'];
+  files.forEach((file, i) => {
+    const div = document.createElement('div');
+    div.className = 'img-preview';
+    div.innerHTML = `${emojis[i % emojis.length]}<div class="img-remove" onclick="this.parentElement.remove()">✕</div>`;
+    preview.appendChild(div);
+  });
+  updateProgress();
+  updatePreview();
+  if (files.length > 0) {
+    document.getElementById('previewImg').textContent = emojis[0];
+    const cat = document.getElementById('listingCat').value;
+    if (cat && EMOJI_MAP[cat]) document.getElementById('previewImg').textContent = EMOJI_MAP[cat];
+  }
+}
+
+function selectCond(btn, value) {
+  selectedCondition = value;
+  document.querySelectorAll('.cond-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  updateProgress();
+}
+
+function toggleShip(type) {
+  const el = document.getElementById(`opt-${type}`);
+  const check = document.getElementById(`check-${type}`);
+  check.checked = !check.checked;
+  el.classList.toggle('active', check.checked);
+  updatePreview();
+}
+
+function updatePreview() {
+  const price = document.getElementById('listingPrice')?.value;
+  const title = document.getElementById('listingTitle')?.value || 'Your item title';
+  const loc = document.getElementById('listingLocation')?.value || 'Your location';
+  const cat = document.getElementById('listingCat')?.value;
+  const shipping = document.getElementById('check-shipping')?.checked;
+  const pickup = document.getElementById('check-pickup')?.checked;
+
+  document.getElementById('previewPrice').textContent = price ? (price == 0 ? 'FREE' : '$'+price) : '$—';
+  document.getElementById('previewTitle').textContent = title;
+  document.getElementById('previewMeta').textContent = `📍 ${loc}`;
+
+  const titleEl = document.getElementById('listingTitle');
+  const count = document.getElementById('titleCount');
+  if (titleEl && count) count.textContent = titleEl.value.length;
+
+  if (cat && EMOJI_MAP[cat]) document.getElementById('previewImg').textContent = EMOJI_MAP[cat];
+
+  const badges = [];
+  if (selectedCondition) badges.push(`<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:var(--accent-soft);color:var(--accent)">${selectedCondition}</span>`);
+  if (pickup) badges.push(`<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#e8f5e9;color:#2e7d32">🤝 Pickup</span>`);
+  if (shipping) badges.push(`<span style="font-size:11px;padding:3px 10px;border-radius:20px;background:#e3f2fd;color:#1565c0">📦 Shipping</span>`);
+  document.getElementById('previewBadges').innerHTML = badges.join('');
+
+  updateProgress();
+}
+
+function checkFreeItem() {
+  const price = parseFloat(document.getElementById('listingPrice')?.value || 1);
+  document.getElementById('freeItemNote').style.display = price === 0 ? 'block' : 'none';
+  document.getElementById('priceEstimate').style.display = price > 0 ? 'block' : 'none';
+}
+
+function updateProgress() {
+  const hasPhoto = document.getElementById('imgPreview')?.children.length > 0;
+  const hasTitle = document.getElementById('listingTitle')?.value.length > 3;
+  const hasCat = !!document.getElementById('listingCat')?.value;
+  const hasCond = !!selectedCondition;
+  const hasPrice = document.getElementById('listingPrice')?.value !== '';
+  const steps = [hasPhoto, hasTitle && hasCat && hasCond, hasPrice, true, true];
+  steps.forEach((done, i) => {
+    document.getElementById(`prog-${i}`)?.classList.toggle('done', done);
+    document.getElementById(`lbl-${i}`)?.classList.toggle('active', done);
+  });
+}
+
+function generateAIDesc() {
+  const el = document.getElementById('aiSuggest');
+  const text = document.getElementById('aiText');
+  el.style.display = 'block';
+  text.textContent = 'Generating...';
+  setTimeout(() => {
+    text.textContent = AI_DESC[Math.floor(Math.random() * AI_DESC.length)];
+  }, 800);
+}
+
+function applyAISuggest() {
+  const text = document.getElementById('aiText').textContent;
+  document.getElementById('listingDesc').value = text;
+  document.getElementById('aiSuggest').style.display = 'none';
+  showToast('✅ Description applied!');
+}
+
+function publishListing() {
+  const title = document.getElementById('listingTitle')?.value;
+  const price = document.getElementById('listingPrice')?.value;
+  const cat = document.getElementById('listingCat')?.value;
+  const loc = document.getElementById('listingLocation')?.value;
+  const errors = [];
+  if (!title) errors.push('title');
+  if (!price && price !== '0') errors.push('price');
+  if (!cat) errors.push('category');
+  if (!loc) errors.push('location');
+  if (!selectedCondition) errors.push('condition');
+
+  const checklist = document.getElementById('checklist');
+  const checks = [
+    { label:'Photos added', ok: document.getElementById('imgPreview')?.children.length > 0 },
+    { label:'Title filled', ok: !!title },
+    { label:'Category selected', ok: !!cat },
+    { label:'Condition set', ok: !!selectedCondition },
+    { label:'Price set', ok: price !== '' },
+    { label:'Location added', ok: !!loc },
+    { label:'Delivery selected', ok: document.getElementById('check-pickup')?.checked || document.getElementById('check-shipping')?.checked },
+  ];
+  checklist.innerHTML = checks.map(c => `
+    <div style="display:flex;align-items:center;gap:8px;font-size:14px">
+      <span style="color:${c.ok ? '#22c55e' : '#ef4444'}">${c.ok ? '✓' : '✗'}</span>
+      <span style="color:${c.ok ? 'var(--text)' : 'var(--text3)'}">${c.label}</span>
+    </div>`).join('');
+
+  if (errors.length) {
+    showToast(`⚠️ Please fill in: ${errors.join(', ')}`);
+    return;
+  }
+
+  const btn = document.querySelector('.form-submit');
+  btn.textContent = 'Publishing...';
+  btn.disabled = true;
+  setTimeout(() => {
+    showToast('🎉 Listing published successfully!');
+    setTimeout(() => window.location.href = 'profile.html', 1500);
+  }, 1200);
+}
+</script>
+</body>
+</html>
